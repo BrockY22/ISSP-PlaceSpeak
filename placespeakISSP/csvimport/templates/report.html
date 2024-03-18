@@ -44,7 +44,6 @@
               </a>
           </div>
         </form>
-        <h1>Summary</h1>
         <h1>Results</h1>
         <table>
           <!-- Table headers -->
@@ -55,6 +54,7 @@
               <th>Sentiment</th>
               <th>Confidence Score</th>
               <th>Emotion Detection</th>
+              <th>Narrative Summary</th>
             </tr>
           </thead>
           <tbody>
@@ -66,6 +66,7 @@
               <td>{{ entry.Sentiment }}</td>
               <td>{{ entry.ConfidenceScore }}</td>
               <td>{{ entry.ReactionEmotion }}</td>
+              <td>{{ entry.Summary }}</td>
             </tr>
             {% endfor %} {% else %}
             <!-- You can place a message here or leave it empty if you only want to show the header -->

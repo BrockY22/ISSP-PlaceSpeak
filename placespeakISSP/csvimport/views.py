@@ -5,6 +5,7 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
+from io import StringIO
 import requests
 import csv
 import re
@@ -21,11 +22,12 @@ def remove_non_printable_chars(text):
 def send_csv_to_api(request):
     standard_query = """"Generate the result in csv format without any explaination. Do not include a header for the data. For each response,
                     column 1:Report id
-                    column 2:Give me key words
+                    column 2:Give me phrases to summarize the response
                     column 3:Generate a sentimental analysis of the response from positive, neutral, or negative
                     column 4:Generate a confidence score in a percentage
                     column 5:Determine the reaction/emotion
-                    Format the data as "ID, Key Words, Sentiment, Confidence Score, Reaction/Emotion
+                    column 6:Generate a narrative summary of the all the data and responses
+                    Format the data as: ID, Key Words, Sentiment, Confidence Score, Reaction/Emotion, Summary
                     """
     if request.method == 'POST' and 'csv_file' in request.FILES:
         csv_file = request.FILES['csv_file']
@@ -58,34 +60,17 @@ def send_csv_to_api(request):
         
             result = response_data.get("choices")[0].get("message").get("content")
             entries = []
-            for line in result.strip().split("\n"):
-                parts = line.split(',')
+            for line in csv.reader(StringIO(result.strip())):
                 # Create a dictionary for each line and append to entries
                 entry = {
-                    'ID': parts[0].strip(),
-                    'KeyPhrases': parts[1].strip(),
-                    'Sentiment': parts[2].strip(),
-                    'ConfidenceScore': parts[3].strip(),
-                    'ReactionEmotion': parts[4].strip(),
-                }
+                    'ID': line[0].strip(),
+                    'KeyPhrases': line[1].strip(),
+                    'Sentiment': line[2].strip(),
+                    'ConfidenceScore': line[3].strip(),
+                    'ReactionEmotion': line[4].strip(),
+                    'Summary': line[5].strip(),
+                }  
                 entries.append(entry)
-            summary_data = {
-            "model": "gpt-3.5-turbo",
-            "messages": [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Summarize the data above and genearate a short report."}
-            ],
-            "max_tokens": 4096,
-            }
-            summary = requests.post(api_url,headers=headers, json=summary_data)
-            if summary.status_code == 200:
-                summary_data = summary.json()
-                summary_result = summary_data.get("choices")[0].get("message").get("content")
-                print(summary_result)
-
-
-
-
             request.session['api_response'] = entries
             return redirect('home')
         else:
@@ -100,7 +85,7 @@ def download_data(request):
     response['Content-Disposition'] = 'attachment; filename="sentiment_analysis_data_{}.csv"'.format(datetime.now().strftime("%Y%m%d_%H%M%S"))
    # response['Content-Disposition'] = 'attachment; filename="sentiment_analysis_data.csv"'
     writer = csv.writer(response)
-    writer.writerow(['ID','KeyPhrases', 'Sentiment', 'ConfidenceScore', 'ReactionEmotion'])
+    writer.writerow(['ID','KeyPhrases', 'Sentiment', 'ConfidenceScore', 'ReactionEmotion', 'Summary'])
 
     entries = request.session.get('api_response',None)
     if entries:  # Check if entries is not None or empty
@@ -110,7 +95,8 @@ def download_data(request):
                 entry.get('KeyPhrases', ''),
                 entry.get('Sentiment', ''),
                 entry.get('ConfidenceScore', ''),
-                entry.get('ReactionEmotion', '')
+                entry.get('ReactionEmotion', ''),
+                entry.get('Summary', '')
             ])
         del request.session['api_response']
     else:
