@@ -28,23 +28,24 @@
         </ul>
       </nav>
       <main id="result-container">
-        <h1>Results</h1>
-                <form
-          action="{% url 'send_csv_to_api' %}"
-          method="post"
-          enctype="multipart/form-data"
-        >
-          {% csrf_token %}
-            <div>
-                <input type="file" name="csv_file" required />
-                <button type="submit" class="btn btn-primary">Upload and Analyze CSV</button>
-            
-                <a href="{% url 'download_data' %}" class="btn btn-primary float-end" id="download-btn">
-                    <i class="fa-solid fa-file-arrow-down"></i>
-                </a>
-            </div>
-        
+        <h1>Upload CSV</h1>
+        <form
+        action="{% url 'send_csv_to_api' %}"
+        method="post"
+        enctype="multipart/form-data"
+      >
+        {% csrf_token %}
+          <div>
+              <input type="file" name="csv_file" required />
+              <button type="submit" class="btn btn-primary">Upload and Analyze CSV</button>
+          
+              <a href="{% url 'download_data' %}" class="btn btn-primary float-end" id="download-btn">
+                  <i class="fa-solid fa-file-arrow-down"></i>
+              </a>
+          </div>
         </form>
+        <h1>Summary</h1>
+        <h1>Results</h1>
         <table>
           <!-- Table headers -->
           <thead>
